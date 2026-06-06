@@ -29,7 +29,7 @@ from google.adk.runners import InMemoryRunner
 from google.genai import types
 
 from instrumentation import setup_tracing
-from shopping_demo.agent import root_agent
+from worldcup_agent.agent import root_agent
 
 
 async def run_turn(user_text: str) -> None:
@@ -39,12 +39,16 @@ async def run_turn(user_text: str) -> None:
     await runner.session_service.create_session(
         app_name=app_name, user_id=user_id, session_id=session_id
     )
-    async for _ in runner.run_async(
+    async for event in runner.run_async(
         user_id=user_id,
         session_id=session_id,
         new_message=types.Content(role="user", parts=[types.Part(text=user_text)]),
     ):
-        pass
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                if getattr(part, "text", None):
+                    print(part.text, end="", flush=True)
+    print()
 
 
 def main() -> None:
