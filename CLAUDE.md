@@ -75,11 +75,32 @@ MCP results before they reach the model. Goal: stable reflection answer, no 400,
 Note: the `Attempted to exit cancel scope...` error on shutdown is a HARMLESS stdio-teardown
 race in one-shot mode — `main.py` swallows it in a try/except; ignore it.
 
+## Status — Step 4 DONE (eval / self-improvement loop, the finale)
+- **LLM-as-judge** (`agent/eval.py`): `evaluate_plan()` scores a plan 0..1 on 4 checkable
+  criteria — (a) total per-person cost <= budget, (b) gate time = kickoff - venue buffer,
+  (c) transit names a real option from `get_match_logistics`, (d) plan complete. Judge is
+  Gemini 3.1 with a structured `JudgeVerdict` (per-criterion bools + rationale); the numeric
+  score is computed in code (mean of bools), not by the LLM. Verified: weak plan -> 0.50,
+  strong plan -> 1.00.
+- **Score logged to Phoenix** as a `plan_quality` span annotation on the run's ROOT span
+  (`eval.log_eval_to_phoenix`, via `phoenix.client` `spans.add_span_annotation`). Visible in
+  the UI and readable via `get-span-annotations`. `run_eval.py` wraps each planning turn in
+  one `match_day_plan` root span (openinference CHAIN) so the whole run is one annotated trace.
+- **Loop closed, agent-driven:** the planner has a `read_eval_history` FunctionTool
+  (`eval.read_eval_history`) that reads its own recent `plan_quality` scores + rationales
+  directly from Phoenix (~2-3s). In `reflect` mode it reads that history, names the recurring
+  weaknesses FROM the rationales, and fixes them -> 0.50 -> 1.00, deterministically across 3+ runs.
+  - DESIGN NOTE: the live improvement loop intentionally uses this direct read, NOT the MCP
+    `reflection` sub-agent. The MCP path (agent-in-an-agent hitting remote Phoenix) ran ~100s
+    and intermittently 404'd — too slow/flaky to drive the loop. The MCP `reflection` tool is
+    KEPT for the standalone self-introspection demo (it reads the same annotations over MCP and
+    works fine, ~40-70s). So judges get both: robust self-improvement + meaningful MCP use.
+- **Before/after demo (for the video):** `make demo-loop` runs naive, naive, reflect and prints
+  a BEFORE/AFTER summary (0.50, 0.50 -> 1.00). Also `make eval-naive` / `make eval-reflect`.
+  Live tool-call trace prints to stderr. MCP timeout lowered to 25s in `agent.py` so a slow
+  reflection call fails fast instead of hanging.
+
 ## Status — LEFT TO BUILD
-- **Step 4 — eval / self-improvement loop (the finale, highest value):** score each plan
-  (budget respected? gate buffer correct? transit plausible?) via an LLM-as-judge, log the
-  score to Phoenix, and have the agent read its own eval scores via the reflection path and
-  improve the next plan. Show the score going up.
 - **Deploy to Cloud Run** for the required hosted project URL (free tier; keep within credits).
 - **~3 minute demo video** showing: multi-step plan, live search, self-introspection, self-improvement.
 - **Devpost submission**: hosted URL + public repo URL + video + select Arize track + form.

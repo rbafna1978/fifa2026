@@ -57,7 +57,12 @@ def main() -> None:
         if len(sys.argv) > 1
         else "Help me find a floral summer dress under $50 and buy size M."
     )
-    asyncio.run(run_turn(msg))
+    try:
+        asyncio.run(run_turn(msg))
+    except (RuntimeError, asyncio.CancelledError):
+        # MCP stdio subprocess teardown races on interpreter exit in one-shot mode.
+        # The agent's response has already completed; this only affects shutdown.
+        pass
 
 
 if __name__ == "__main__":
