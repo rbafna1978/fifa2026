@@ -1,0 +1,19 @@
+# Keep secrets and local cruft OUT of the Cloud Build upload context.
+# (When this file exists, gcloud uses it instead of .gitignore.)
+.env
+.venv/
+.git/
+.gitignore
+.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+*.egg-info/
+.arize-tmp-traces/
+.adk/
+agent/**/.adk/
+.claude/
+.gemini/

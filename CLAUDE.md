@@ -100,8 +100,38 @@ race in one-shot mode — `main.py` swallows it in a try/except; ignore it.
   Live tool-call trace prints to stderr. MCP timeout lowered to 25s in `agent.py` so a slow
   reflection call fails fast instead of hanging.
 
+## Status — DEPLOYED to Cloud Run (hosted URL requirement DONE)
+- **Live URL:** https://worldcup-agent-324051541372.us-central1.run.app  (unauthenticated;
+  judges open it, type a request, get a plan). `/status` returns config + tool list; `/plan`
+  (POST JSON `{"message": ...}`) runs one traced turn. (Do NOT use `/healthz` — the Google
+  Front End intercepts that literal path with a 404; we use `/status`.)
+- **Serving layer:** `agent/server.py` (FastAPI, single-page UI + `/plan` + `/status`). Wraps
+  the unchanged `root_agent` via `InMemoryRunner`, one ADK turn per request, fully traced to
+  Phoenix `worldcup-agent`. Deps `fastapi` + `uvicorn[standard]` added to pyproject/uv.lock.
+- **Container:** `Dockerfile` (python:3.11-slim, `uv sync --frozen --no-dev --no-install-project`,
+  runs `uvicorn server:app`). `.gcloudignore` keeps `.env`/`.venv`/`.git` out of the build context.
+- **Config/secrets:** all via Cloud Run env vars (`GOOGLE_GENAI_USE_VERTEXAI=1`,
+  `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`, `GEMINI_MODEL=gemini-3.1-pro-preview`,
+  `PHOENIX_COLLECTOR_ENDPOINT`, `PHOENIX_PROJECT_NAME`); `PHOENIX_API_KEY` from Secret Manager
+  secret `phoenix-api-key`. Nothing baked into the image.
+- **Auth:** Vertex via the runtime SA `324051541372-compute@developer.gserviceaccount.com`,
+  granted `roles/aiplatform.user`, `roles/secretmanager.secretAccessor` (on the secret), and
+  `roles/cloudbuild.builds.builder` (needed for `--source` builds).
+- **No Node in the container:** the MCP `reflection` tool is added only when `npx` exists
+  (see `agent.py`), so on Cloud Run it's absent and the agent degrades gracefully; the
+  self-improvement loop uses the direct Phoenix read (`read_eval_history`), which works there.
+  Verified `/status` tool list excludes `reflection`; verified deployed `/plan` runs emit
+  fresh traces to Phoenix `worldcup-agent`.
+- **Cost:** region us-central1, min-instances 0 (scale to zero), max-instances 2, cpu 1 /
+  mem 1Gi, concurrency 8 — within free tier.
+- **Redeploy command:** `gcloud run deploy worldcup-agent --source . --project
+  norse-breaker-498618-j0 --region us-central1 --allow-unauthenticated --service-account
+  324051541372-compute@developer.gserviceaccount.com --cpu 1 --memory 1Gi --min-instances 0
+  --max-instances 2 --concurrency 8 --timeout 300 --set-env-vars
+  "GOOGLE_GENAI_USE_VERTEXAI=1,GOOGLE_CLOUD_PROJECT=norse-breaker-498618-j0,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-3.1-pro-preview,PHOENIX_COLLECTOR_ENDPOINT=https://app.phoenix.arize.com/s/fifa2026,PHOENIX_PROJECT_NAME=worldcup-agent"
+  --set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest"`
+
 ## Status — LEFT TO BUILD
-- **Deploy to Cloud Run** for the required hosted project URL (free tier; keep within credits).
 - **~3 minute demo video** showing: multi-step plan, live search, self-introspection, self-improvement.
 - **Devpost submission**: hosted URL + public repo URL + video + select Arize track + form.
 
