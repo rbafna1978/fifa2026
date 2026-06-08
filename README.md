@@ -5,7 +5,7 @@
 🌐 **Live demo (hosted on Cloud Run):** https://worldcup-agent-324051541372.us-central1.run.app
 🏷️ Submission for the **Google Cloud "Rapid Agent" Hackathon — Arize track**.
 
-Open the URL, type a request (e.g. *"Plan my match day at SoFi Stadium, kickoff 16:00, budget $60 per person"*), and get a complete plan in ~15–30s. Every run is traced to Phoenix.
+Open the URL, fill in a short form (venue, kickoff, budget, plus toggles for knockout / tickets-paid / accessibility / dietary / post-game stop), and get a complete, constraint-aware plan in ~20–40s. Every run is traced to Phoenix.
 
 ---
 
@@ -13,12 +13,15 @@ Open the URL, type a request (e.g. *"Plan my match day at SoFi Stadium, kickoff 
 
 A fan-logistics planner for World Cup 2026 host venues. Given a venue, kickoff time, and per-person budget, it produces a complete match-day plan as a multi-step tool chain:
 
-1. **`get_match_logistics`** → city, public-transit route, recommended gate-arrival buffer.
-2. **`find_food_near`** → curated food options within a share of the budget.
-3. **`build_day_plan`** → assembles the timeline, gate-arrival time (kickoff − buffer), and per-person cost breakdown.
-4. **`live_search`** → keyless Google Search grounding for current facts (fixtures, kickoff times, advisories).
+1. **`get_match_logistics`** → city, public-transit route, recommended gate-arrival buffer, a post-event **egress estimate**, and **sourced accessibility** details (parking / entrances / transit drop-off / companion seating).
+2. **`find_food_near`** → curated food options within a share of the budget, with an optional **dietary filter** (vegan / vegetarian / halal / gluten-free). If nothing matches, it says so honestly rather than inventing a place.
+3. **`estimate_match_end`** → pure-arithmetic earliest/latest match end time (normal time ~+113 min; a **knockout** game adds an extra-time + penalties tail → latest ~+170 min).
+4. **`build_day_plan`** → assembles the timeline, gate-arrival time (kickoff − buffer), and per-person cost breakdown — honoring **tickets-already-paid** (budget then covers transit + food + any post-game stop; tickets are never priced).
+5. **`live_search`** → keyless Google Search grounding for current facts (fixtures, kickoff times, advisories) **and** a post-game stop's opening hours, so the plan can check it'll still be open given the estimated match end.
 
-Curated venues: MetLife, SoFi, AT&T, Mercedes-Benz, Lumen Field.
+It honors flags the user sets: **is_knockout, dietary, tickets_paid, accessibility_needs, want_post_game_stop**. Travel/egress times are clearly labelled as **estimates from comparable past events, not live match-day traffic**; open-hours come from live search.
+
+Curated venues: MetLife, SoFi, AT&T, Mercedes-Benz, Lumen Field. Accessibility data is real and sourced from each venue's official accessibility page (source URLs in `tools.py`).
 
 ---
 
@@ -56,19 +59,23 @@ The agent scores and learns from its own plans:
 ```
 root_agent  (worldcup_agent/agent.py — Gemini 3.1, Google ADK)
 │
-├─ get_match_logistics   FunctionTool   curated venue logistics  (tools.py)
-├─ find_food_near        FunctionTool   curated food options     (tools.py)
-├─ build_day_plan        FunctionTool   assembles the plan       (tools.py)
-├─ read_eval_history     FunctionTool   reads own plan_quality scores from Phoenix (eval.py)
+├─ get_match_logistics   FunctionTool   venue logistics + egress + sourced accessibility (tools.py)
+├─ find_food_near        FunctionTool   curated food options + dietary filter           (tools.py)
+├─ estimate_match_end    FunctionTool   earliest/latest end time (knockout aware)        (tools.py)
+├─ build_day_plan        FunctionTool   assembles the plan (tickets_paid, post_game_cost)(tools.py)
+├─ read_eval_history     FunctionTool   reads own plan_quality scores from Phoenix       (eval.py)
 ├─ live_search           AgentTool  →  sub-agent w/ built-in google_search (keyless grounding)
 └─ reflection            AgentTool  →  sub-agent w/ Phoenix MCP toolset    (local only; phoenix_reflection.py)
 
 eval.py            LLM-as-judge + writes plan_quality span annotations to Phoenix
 run_eval.py        runs a planning turn → judges it → logs the score (naive | reflect | demo)
 instrumentation.py phoenix.otel.register(auto_instrument=True)
-server.py          FastAPI serving layer for Cloud Run (single-page UI + /plan + /status)
+server.py          FastAPI serving layer for Cloud Run: structured form UI, /plan-form, /plan, /status
 main.py            one-shot CLI turn
 ```
+
+### Web UI
+The hosted page (`server.py`) is a clean, responsive **structured form** — venue dropdown, kickoff time, budget, dietary dropdown, and knockout / tickets-paid / accessibility / post-game toggles. On submit it POSTs to **`/plan-form`**, which composes the fields **server-side** into the natural-language request the agent already expects (so the clean composed input is what gets traced) and runs the same traced turn. The plan is rendered from markdown to formatted HTML in the browser. `/plan` (raw `{"message": ...}` in → traced plan out) remains available unchanged.
 
 ---
 
@@ -102,7 +109,9 @@ make run MESSAGE='Use reflection to inspect your own recent Phoenix runs and pla
 
 ```bash
 cd agent && uv run uvicorn server:app --host 127.0.0.1 --port 8080
-# open http://127.0.0.1:8080  ·  GET /status for config  ·  POST /plan {"message": "..."}
+# open http://127.0.0.1:8080 for the form  ·  GET /status for config
+# POST /plan-form {"venue","kickoff","budget","is_knockout","tickets_paid","dietary","accessibility_needs","want_post_game_stop"}
+# POST /plan      {"message": "..."}   (raw free-text path, unchanged)
 ```
 
 ---

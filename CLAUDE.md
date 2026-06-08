@@ -131,6 +131,41 @@ race in one-shot mode — `main.py` swallows it in a try/except; ignore it.
   "GOOGLE_GENAI_USE_VERTEXAI=1,GOOGLE_CLOUD_PROJECT=norse-breaker-498618-j0,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-3.1-pro-preview,PHOENIX_COLLECTOR_ENDPOINT=https://app.phoenix.arize.com/s/fifa2026,PHOENIX_PROJECT_NAME=worldcup-agent"
   --set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest"`
 
+## Status — Phase 1/2 feature work DONE (smarter tools + form UI)
+- **New tool `estimate_match_end(kickoff, is_knockout)`** (`tools.py`): pure arithmetic end-time
+  envelope — normal time ~+113 min; knockout adds ~+57 tail -> latest ~+170. Wired into `agent.py`.
+- **Dietary filter:** `_FOOD` options now carry curated `dietary` tags (vegan/vegetarian/halal/
+  gluten_free); `find_food_near(city, max_price, dietary="")` filters and honestly reports when
+  nothing matches (no fabrication). Tags are curated hints, not a live-menu guarantee.
+- **`build_day_plan`** gained `tickets_paid=True` and `post_game_cost=0`: cost breakdown reflects
+  tickets-excluded budget + optional post-game stop; tickets are never priced.
+- **Per-venue `post_event_egress_min` + `egress_note`** in `get_match_logistics`: HISTORICAL
+  estimates from comparable NFL games/concerts (labelled, not live traffic). MetLife/SoFi/AT&T ~60,
+  Mercedes-Benz/Lumen ~45 min. Sources in code comments.
+- **Real, sourced `accessibility`** per venue (parking / entrances / transit_dropoff /
+  companion_seating + `source` URL) from each venue's official accessibility page — see source
+  comments in `tools.py`. Surfaced when `accessibility_needs` is set.
+- **Post-game stop** is prompt-driven: planner uses `estimate_match_end` + curated transit time as
+  the travel ESTIMATE (not live traffic) + `live_search` for the place's hours -> feasibility call.
+- **Prompt** (`prompt.py`) threads is_knockout / dietary / tickets_paid / accessibility_needs /
+  want_post_game_stop and always closes with labelled egress advice.
+- **Form UI** (`server.py`): `/` is now a structured form (venue dropdown, kickoff, budget,
+  knockout/tickets/accessibility/post-game toggles, dietary dropdown). New `/plan-form` endpoint
+  composes the fields server-side into the NL message and runs the SAME traced `_run_turn`; `/plan`
+  (message in) is unchanged. `KNOWN_VENUES` exported from `tools.py`.
+- **Eval criteria intentionally NOT extended** — to protect the verified `make demo-loop`
+  0.50->1.00 behavior (re-verified intact after these changes). New constraint-aware eval criteria
+  are noted as future work.
+- Live URL re-verified on revision worldcup-agent-00003-27c: form renders, constraint-aware plans
+  (knockout envelope, dietary honest-no-match, accessibility w/ source, tickets framing), fresh
+  Phoenix traces from the deployed instance.
+- **UI polish (revision worldcup-agent-00004-tmz):** the plan was rendering as raw markdown
+  (literal `###`/`**`). `server.py` now ships a small dependency-free client-side markdown renderer
+  (headings/bold/italic/lists/links, HTML-escaped) and a clean pitch-green design (hero + cards,
+  solid colors, no gradients, responsive, accessible focus states, loading spinner). Page is a
+  plain-string template with `__VENUE_OPTS__`/`__DIET_OPTS__` placeholders (no f-string brace
+  escaping). `/plan-form` + tracing unchanged. Renderer verified with Node; live page serves it.
+
 ## Status — LEFT TO BUILD
 - **~3 minute demo video** showing: multi-step plan, live search, self-introspection, self-improvement.
 - **Devpost submission**: hosted URL + public repo URL + video + select Arize track + form.

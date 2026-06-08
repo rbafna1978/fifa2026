@@ -17,7 +17,8 @@ from instrumentation import setup_tracing
 from worldcup_agent.phoenix_reflection import BoundedPhoenixToolset, SAFE_TOOLS
 from worldcup_agent.prompt import worldcup_agent_instruction
 from worldcup_agent.reflection_prompt import reflection_instruction
-from worldcup_agent.tools import get_match_logistics, find_food_near, build_day_plan
+from worldcup_agent.tools import (
+    get_match_logistics, find_food_near, build_day_plan, estimate_match_end)
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 setup_tracing()
@@ -40,6 +41,7 @@ search_agent = Agent(
 _tools = [
     FunctionTool(func=get_match_logistics),
     FunctionTool(func=find_food_near),
+    FunctionTool(func=estimate_match_end),
     FunctionTool(func=build_day_plan),
     FunctionTool(func=read_eval_history),
     AgentTool(agent=search_agent),
