@@ -1,7 +1,7 @@
 [project]
-name = "gemini-hackathon"
+name = "matchday-agent"
 version = "0.1.0"
-description = "ADK shopping demo + Phoenix tracing for the Arize / Google Cloud hackathon track"
+description = "World Cup 2026 fan-logistics agent (Gemini 3.1 + Google ADK), traced and self-improving via Arize Phoenix"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10,<3.13"
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["agent/shopping_demo"]
+packages = ["agent/worldcup_agent"]
 
 [build-system]
 requires = ["hatchling"]

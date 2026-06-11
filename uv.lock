@@ -913,37 +913,6 @@ wheels = [
 ]
 
 [[package]]
-name = "gemini-hackathon"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "arize-phoenix" },
-    { name = "fastapi" },
-    { name = "google-adk" },
-    { name = "google-genai" },
-    { name = "mcp" },
-    { name = "openinference-instrumentation-google-adk" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
-    { name = "opentelemetry-sdk" },
-    { name = "python-dotenv" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "arize-phoenix", specifier = ">=7.0" },
-    { name = "fastapi", specifier = ">=0.136.1" },
-    { name = "google-adk", specifier = ">=1.32.0" },
-    { name = "google-genai", specifier = ">=1.9.0" },
-    { name = "mcp", specifier = ">=1.27.0" },
-    { name = "openinference-instrumentation-google-adk", specifier = ">=0.1.11" },
-    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.46.0" },
-]
-
-[[package]]
 name = "genai-prices"
 version = "0.0.57"
 source = { registry = "https://pypi.org/simple" }
@@ -2149,6 +2118,37 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2f/e1/78ee7a023dac597a5825441ebd17170785a9dab23de95d2c7508ade94e0e/markupsafe-3.0.3-cp312-cp312-win32.whl", hash = "sha256:d88b440e37a16e651bda4c7c2b930eb586fd15ca7406cb39e211fcff3bf3017d", size = 14540, upload-time = "2025-09-27T18:36:38.761Z" },
     { url = "https://files.pythonhosted.org/packages/aa/5b/bec5aa9bbbb2c946ca2733ef9c4ca91c91b6a24580193e891b5f7dbe8e1e/markupsafe-3.0.3-cp312-cp312-win_amd64.whl", hash = "sha256:26a5784ded40c9e318cfc2bdb30fe164bdb8665ded9cd64d500a34fb42067b1c", size = 15105, upload-time = "2025-09-27T18:36:39.701Z" },
     { url = "https://files.pythonhosted.org/packages/e5/f1/216fc1bbfd74011693a4fd837e7026152e89c4bcf3e77b6692fba9923123/markupsafe-3.0.3-cp312-cp312-win_arm64.whl", hash = "sha256:35add3b638a5d900e807944a078b51922212fb3dedb01633a8defc4b01a3c85f", size = 13906, upload-time = "2025-09-27T18:36:40.689Z" },
+]
+
+[[package]]
+name = "matchday-agent"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "arize-phoenix" },
+    { name = "fastapi" },
+    { name = "google-adk" },
+    { name = "google-genai" },
+    { name = "mcp" },
+    { name = "openinference-instrumentation-google-adk" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-sdk" },
+    { name = "python-dotenv" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "arize-phoenix", specifier = ">=7.0" },
+    { name = "fastapi", specifier = ">=0.136.1" },
+    { name = "google-adk", specifier = ">=1.32.0" },
+    { name = "google-genai", specifier = ">=1.9.0" },
+    { name = "mcp", specifier = ">=1.27.0" },
+    { name = "openinference-instrumentation-google-adk", specifier = ">=0.1.11" },
+    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
+    { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.46.0" },
 ]
 
 [[package]]

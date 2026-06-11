@@ -34,7 +34,7 @@ from worldcup_agent.agent import root_agent
 
 async def run_turn(user_text: str) -> None:
     setup_tracing()
-    app_name, user_id, session_id = "hackathon_shopping", "local_user", secrets.token_hex(8)
+    app_name, user_id, session_id = "worldcup_agent", "local_user", secrets.token_hex(8)
     runner = InMemoryRunner(agent=root_agent, app_name=app_name)
     await runner.session_service.create_session(
         app_name=app_name, user_id=user_id, session_id=session_id
@@ -55,7 +55,7 @@ def main() -> None:
     msg = (
         sys.argv[1]
         if len(sys.argv) > 1
-        else "Help me find a floral summer dress under $50 and buy size M."
+        else "Plan my match day at SoFi Stadium. Kickoff is 16:00. My budget is $60 per person."
     )
     try:
         asyncio.run(run_turn(msg))

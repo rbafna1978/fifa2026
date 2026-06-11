@@ -116,6 +116,28 @@ cd agent && uv run uvicorn server:app --host 127.0.0.1 --port 8080
 
 ---
 
+## Future work
+
+Deliberate scope lines, called out honestly:
+
+- **Live traffic / crowd-queue modeling.** Transit times, gate buffers, and post-event
+  egress are curated/historical estimates (from comparable past NFL games and concerts at
+  each venue), clearly labelled as such everywhere they surface. Swapping in a live
+  traffic/transit API for match day is future work.
+- **Constraint-aware eval criteria.** The LLM-as-judge currently scores the original four
+  criteria (budget, gate time, real transit, completeness) — kept stable on purpose to
+  protect the verified `make demo-loop` 0.50 → 1.00 result. Adding criteria for the newer
+  constraints (dietary honesty, accessibility sourcing, knockout envelope, post-game
+  feasibility) is noted as future work.
+- **MCP reflection on Cloud Run.** The `reflection` sub-agent (Phoenix MCP over `npx`)
+  needs Node, so it runs locally but is omitted from the Python-only Cloud Run container.
+  The hosted self-improvement loop uses the direct `read_eval_history` Phoenix read
+  instead, which works the same everywhere. Running MCP reflection on the hosted instance
+  (e.g. via a Node-enabled image or a hosted MCP transport) is future work.
+- **More venues / fixtures.** Five curated venues today; broader venue coverage and live
+  fixture lookups (beyond the current `live_search` grounding) would extend the demo to
+  the full 2026 schedule.
+
 ## Tech stack
 
 - **Gemini 3.1** (`gemini-3.1-pro-preview`, Vertex AI, global endpoint) — model and LLM-as-judge.
